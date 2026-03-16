@@ -1,41 +1,19 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
+# Compiled objects
+objects/
 *.o
-*.obj
 
-# Precompiled Headers
-*.gch
-*.pch
+# Binary
+ircserv
 
-# Linker files
-*.ilk
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Debugger Files
-*.pdb
+# macOS
+.DS_Store
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# debug information files
-*.dwo
+# others
+docs/ft_irc.pdf

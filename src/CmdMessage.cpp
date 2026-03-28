@@ -136,6 +136,8 @@ void Server::execKick(Client* c, const std::vector<std::string>& args)
 		delete ch;
 		_rooms.erase(rn);
 	}
+	else
+		ensureOp(ch);
 }
 
 // ── INVITE ──────────────────────────────────────────────────────────────────

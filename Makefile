@@ -19,13 +19,13 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(NAME) $(OBJS)
-# 	@printf "$(MAGENTA)             _           \n$(RESET)"
-# 	@printf "$(MAGENTA)  __ _      |_|          \n$(RESET)"
-# 	@printf "$(MAGENTA) / _| |_     _ _ __ ___  \n$(RESET)"
-# 	@printf "$(MAGENTA)| |_| __|   | |  __/ __| \n$(RESET)"
-# 	@printf "$(MAGENTA)|  _| |_    | | |  | |_  \n$(RESET)"
-# 	@printf "$(MAGENTA)|_|  \__|___|_|_|  \___| \n$(RESET)"
-# 	@printf "\n"
+	@printf "$(MAGENTA)             _           \n$(RESET)"
+	@printf "$(MAGENTA)  __ _      |_|          \n$(RESET)"
+	@printf "$(MAGENTA) / _| |_     _ _ __ ___  \n$(RESET)"
+	@printf "$(MAGENTA)| |_| __|   | |  __/ __| \n$(RESET)"
+	@printf "$(MAGENTA)|  _| |_    | | |  | |_  \n$(RESET)"
+	@printf "$(MAGENTA)|_|  \__|___|_|_|  \___| \n$(RESET)"
+	@printf "\n"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@

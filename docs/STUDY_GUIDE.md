@@ -385,6 +385,27 @@ std::string Server::hostname() const { return "ircserv"; }
 Devuelve el nombre del servidor. Usado como prefijo en mensajes numericos.
 
 ```cpp
+void Server::ensureOp(Channel* ch)
+```
+**Auto-asignacion de operador.** Se llama cada vez que un usuario abandona un canal
+(PART, KICK, o desconexion). Si el canal se queda sin operadores pero aun tiene
+usuarios, promueve automaticamente al primer usuario de la lista. Envia un mensaje
+MODE +o a todos los miembros para notificar el cambio:
+```cpp
+void Server::ensureOp(Channel* ch)
+{
+    if (ch->hasOps() || ch->vacant())
+        return;                          // Ya hay ops o el canal esta vacio
+    Client* next = ch->firstUser();      // Primer usuario en el set
+    ch->promote(next);                   // Promover a operador
+    ch->relay(":" + hostname() + " MODE " + ch->getLabel()
+        + " +o " + next->getNick() + "\r\n");
+}
+```
+Esto garantiza que un canal con usuarios nunca se quede sin operadores, evitando
+situaciones donde nadie puede gestionar el canal.
+
+```cpp
 std::vector<std::string> Server::splitList(const std::string& s, char sep)
 ```
 Divide un string por un separador. Se usa para parsear listas separadas por coma
@@ -555,12 +576,19 @@ Desconecta un cliente completamente:
            _rooms.erase(it++);   // Elimina del mapa (post-incremento para no invalidar)
        }
        else
+       {
+           ensureOp(it->second); // Auto-asignar operador si se quedo sin ops
            ++it;
+       }
    }
    ```
    **¡Ojo con el patron `erase(it++)`!** En un `std::map`, borrar un elemento
    invalida solo el iterador borrado. Con `it++` primero avanzamos el iterador
    y luego borramos el anterior. Es un patron clasico de C++98.
+   
+   **Nota sobre `ensureOp()`:** Si el cliente que se desconecta era el unico
+   operador del canal, `ensureOp()` promueve automaticamente al primer usuario
+   restante y notifica a todos con un mensaje MODE +o.
 
 2. **Sacar del pollSet:** busca el fd y lo elimina del vector.
 
@@ -677,6 +705,20 @@ void Channel::dismiss(Client* c) { _users.erase(c); _moderators.erase(c); }
 void Channel::promote(Client* c) { _moderators.insert(c); }
 void Channel::demote(Client* c)  { _moderators.erase(c); }
 ```
+
+**hasOps() / firstUser():**
+```cpp
+bool Channel::hasOps() const { return !_moderators.empty(); }
+
+Client* Channel::firstUser() const
+{
+    return _users.empty() ? NULL : *_users.begin();
+}
+```
+`hasOps()` verifica si hay al menos un operador en el canal.
+`firstUser()` devuelve el primer usuario del set (orden determinado por el comparador
+de punteros en `std::set`). Se usa en `Server::ensureOp()` para elegir al nuevo
+operador cuando el canal se queda sin ninguno.
 
 **allow() / revoke() / isAllowed():**
 Gestion de la whitelist de invitados para modo +i.
@@ -1004,6 +1046,8 @@ Para cada canal:
 3. Enviar mensaje PART a todos los miembros.
 4. `ch->dismiss(c)`.
 5. Si el canal queda vacio, `delete ch` y quitar de `_rooms`.
+6. **Si el canal NO queda vacio, llamar a `ensureOp(ch)`** para auto-asignar
+   operador si el usuario que salio era el unico operador.
 
 ### execTopic (lineas 118-158)
 
@@ -1151,6 +1195,8 @@ Formato: KICK #canal usuario [:razon]
 6. Notifica a todos: `:kicker KICK #canal victima :razon`
 7. `ch->dismiss(victim)`.
 8. Si el canal queda vacio, borrarlo.
+9. **Si el canal NO queda vacio, llamar a `ensureOp(ch)`** para auto-asignar
+   operador si la victima kickeada era el unico operador del canal.
 
 **Nota:** La razon por defecto (si no se da) es el nick del que kickea.
 
@@ -1329,6 +1375,13 @@ R: Cinco modos:
 - `k`: password del canal
 - `o`: dar/quitar status de operador a un usuario
 - `l`: limite de usuarios
+
+**P: ¿Que pasa si el unico operador de un canal sale o es kickeado?**
+R: El servidor auto-asigna un nuevo operador automaticamente. La funcion
+`ensureOp()` se llama despues de cada PART, KICK y desconexion. Si el canal
+se queda sin operadores pero aun tiene usuarios, el primer usuario del set
+`_users` es promovido a operador y se envia un mensaje MODE +o a todos los
+miembros del canal. Esto evita canales "huerfanos" que nadie puede gestionar.
 
 **P: ¿Que pasa si haces `MODE #ch +k` sin dar la contraseña?**
 R: Error 461 NEEDMOREPARAMS (applyModeK, linea 180-185).
@@ -2161,6 +2214,9 @@ Dentro de irssi:
 - [ ] Enviar datos parciales con Ctrl+D -> se acumulan y procesan al recibir \n
 - [ ] Buffer overflow (mas de 4096 bytes sin \n) -> cliente desconectado
 - [ ] Ctrl+C en el servidor -> shutdown limpio, sin leaks
+- [ ] Auto-operador: unico op sale con PART -> otro usuario recibe +o automatico
+- [ ] Auto-operador: unico op es KICKeado -> otro usuario recibe +o automatico
+- [ ] Auto-operador: unico op se desconecta -> otro usuario recibe +o automatico
 
 ### Checklist de bonus para probar
 

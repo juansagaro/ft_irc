@@ -110,6 +110,8 @@ void Server::execPart(Client* c, const std::vector<std::string>& args)
 			delete ch;
 			_rooms.erase(names[i]);
 		}
+		else
+			ensureOp(ch);
 	}
 }
 

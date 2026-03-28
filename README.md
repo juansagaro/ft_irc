@@ -38,6 +38,8 @@ The goal is to implement a fully functional server that handles multiple simulta
 | **Kick Command** | Operators can remove users from channels |
 | **Partial Data Handling** | Aggregates TCP packets before processing commands |
 | **Graceful Shutdown** | SIGINT handler for clean server termination |
+| **File Transfer (DCC)** | Transparent relay of DCC SEND for peer-to-peer file transfers |
+| **Bot (Marvin)** | Integrated pseudo-client bot with 11 interactive commands |
 
 <br>
 
@@ -139,6 +141,36 @@ Once connected:
 /invite othernick #test
 /kick #test othernick reason
 /quit bye
+```
+
+### Testing the Bot (Marvin)
+
+Marvin responds to `!commands` in channels and via direct message:
+
+```bash
+# In a channel:
+PRIVMSG #test :!help
+PRIVMSG #test :!roll 2d6
+PRIVMSG #test :!rps rock
+PRIVMSG #test :!info
+PRIVMSG #test :!who #test
+
+# Direct message:
+PRIVMSG Marvin :!quote
+```
+
+Available commands: `!help`, `!ask`, `!quote`, `!cheer`, `!rps`, `!roll`, `!coin`, `!time`, `!info`, `!who`, `!rules`
+
+### File Transfer (DCC)
+
+DCC file transfers work transparently between IRC clients:
+
+```bash
+# In irssi - sender:
+/dcc send bob /path/to/file.txt
+
+# In irssi - receiver:
+/dcc get alice
 ```
 
 ### Graceful Shutdown
@@ -250,13 +282,15 @@ QUIT :bye
 ft_irc/
 │
 ├── docs/
-│   └── README.md                # Mandatory project documentation
+│   ├── README.md                # Project documentation
+│   └── ft_irc.md                # Study guide covering the full codebase
 ├── include/
 │   ├── Irc.hpp                  # Main header: standard includes, defines, forward declarations
 │   ├── Replies.hpp              # IRC numeric reply constants (RPL:: and ERR:: namespaces)
 │   ├── Server.hpp               # Server class: poll loop, command dispatch, helpers
 │   ├── Client.hpp               # Client class: connection state, buffer, identity
-│   └── Channel.hpp              # Channel class: membership, modes, relay
+│   ├── Channel.hpp              # Channel class: membership, modes, relay
+│   └── Bot.hpp                  # Bot class: Marvin pseudo-client definition
 ├── src/
 │   ├── main.cpp                 # Entry point, argument validation, signal handlers
 │   ├── Server.cpp               # Constructor, destructor, boot(), run(), helper methods
@@ -266,10 +300,11 @@ ft_irc/
 │   ├── Parse.cpp                # IRC message parser, command dispatcher, registration check
 │   ├── CmdAuth.cpp              # PASS, NICK, USER, QUIT, PING command handlers
 │   ├── CmdChannel.cpp           # JOIN, PART, TOPIC, MODE (with decomposed sub-handlers)
-│   └── CmdMessage.cpp           # PRIVMSG, NOTICE, KICK, INVITE command handlers
+│   ├── CmdMessage.cpp           # PRIVMSG, NOTICE, KICK, INVITE command handlers
+│   └── Bot.cpp                  # Bot Marvin: 11 interactive commands with server integration
 ├── .gitignore
 ├── Makefile
-└── README.md                    # Project documentation
+└── README.md                    # GitHub project overview
 ```
 
 <br>

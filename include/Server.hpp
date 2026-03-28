@@ -62,6 +62,7 @@ class Server
 		bool		isLegalNick(const std::string& nick);
 		void		listMembers(Client* c, Channel* ch);
 		void		notifyChannels(Client* c, const std::string& msg);
+		void		ensureOp(Channel* ch);
 		std::string	hostname() const;
 
 		void		botReply(Client* c, const std::string& dest, const std::string& text);

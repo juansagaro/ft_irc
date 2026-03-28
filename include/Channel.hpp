@@ -49,6 +49,8 @@ class Channel
 		void	promote(Client* c);
 		void	demote(Client* c);
 		bool	isModerator(Client* c) const;
+		bool	hasOps() const;
+		Client*	firstUser() const;
 
 		void	allow(const std::string& nick);
 		void	revoke(const std::string& nick);
